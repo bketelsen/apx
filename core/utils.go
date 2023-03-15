@@ -81,7 +81,7 @@ func IsSilverblue() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	blue := strings.Contains("ilverblue", string(osRelease))
+	blue := strings.Contains(string(osRelease), "ilverb")
 	return blue, nil
 
 }
