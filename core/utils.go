@@ -3,8 +3,10 @@ package core
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"os/user"
 	"path/filepath"
+	"strings"
 )
 
 var apxDir = "/etc/apx"
@@ -71,4 +73,15 @@ func CopyToUserTemp(path string) (string, error) {
 	}
 
 	return newPath, nil
+}
+
+func IsSilverblue() (bool, error) {
+	// enable the mount unit, which depends on the others
+	osRelease, err := exec.Command("cat", "/etc/os-release").Output()
+	if err != nil {
+		return false, err
+	}
+	blue := strings.Contains("ilverblue", string(osRelease))
+	return blue, nil
+
 }

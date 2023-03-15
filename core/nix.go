@@ -211,16 +211,27 @@ func NixInit(allowUnfree, allowInsecure bool) error {
 		log.Default().Printf("error creating directory mount unit")
 		return err
 	}
-	err = makeUnit(unitData, "/etc/systemd/system/ensure-nix-dir.service", ensureTemplate)
-	if err != nil {
-		log.Default().Printf("error creating ensure directory unit")
-		return err
+	if blue, err := IsSilverblue(); blue {
+		err = makeUnit(unitData, "/etc/systemd/system/ensure-nix-dir.service", ensureSilverblueNixTemplate)
+
+		if err != nil {
+			log.Default().Printf("error creating ensure directory unit")
+			return err
+		}
+	} else {
+		err = makeUnit(unitData, "/etc/systemd/system/ensure-nix-dir.service", ensureTemplate)
+
+		if err != nil {
+			log.Default().Printf("error creating ensure directory unit")
+			return err
+		}
+		err = makeUnit(unitData, "/etc/systemd/system/ensure-nix-own.service", ownerTemplate)
+		if err != nil {
+			log.Default().Printf("error creating directory ownership unit")
+			return err
+		}
 	}
-	err = makeUnit(unitData, "/etc/systemd/system/ensure-nix-own.service", ownerTemplate)
-	if err != nil {
-		log.Default().Printf("error creating directory ownership unit")
-		return err
-	}
+
 	err = makeUnit(unitData, "/etc/profile.d/xxNixXDG.sh", xdgConfig)
 	if err != nil {
 		log.Default().Printf("error creating directory ownership unit")
@@ -381,6 +392,15 @@ Where=/nix
 [Install]
 WantedBy=multi-user.target
 `
+var ensureSilverblueNixTemplate = `[Unit]
+Description=Ensure /nix is present
+[Service]
+Type=oneshot
+ExecStartPre=chattr -i /
+ExecStart=mkdir -p -m 0755 /nix
+ExecStart=chown -R {{.User}} /nix
+EcecStop=chattr +i /`
+
 var ensureTemplate = `[Unit]
 Description=Ensure /nix is present
 [Service]
