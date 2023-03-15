@@ -218,6 +218,28 @@ func NixInit(allowUnfree, allowInsecure bool) error {
 			log.Default().Printf("error creating ensure directory unit")
 			return err
 		}
+		chcon := exec.Command("sudo", "chcon", "-u", "system_u", "-r", "object_r", "-t", "systemd_unit_file_t", "/etc/systemd/system/ensure-nix-dir.service")
+		chcon.Stderr = os.Stderr
+		chcon.Stdin = os.Stdin
+		chcon.Stdout = os.Stdout
+
+		err = chcon.Run()
+		if err != nil {
+			log.Default().Printf("error applying selinux context")
+			return err
+		}
+
+		chcon2 := exec.Command("sudo", "chcon", "-u", "system_u", "-r", "object_r", "-t", "systemd_unit_file_t", "/etc/systemd/system/nix.mount")
+		chcon2.Stderr = os.Stderr
+		chcon2.Stdin = os.Stdin
+		chcon2.Stdout = os.Stdout
+
+		err = chcon2.Run()
+		if err != nil {
+			log.Default().Printf("error applying selinux context")
+			return err
+		}
+
 	} else {
 		err = makeUnit(unitData, "/etc/systemd/system/ensure-nix-dir.service", ensureTemplate)
 
